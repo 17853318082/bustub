@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #pragma once
 
 #include <memory>
@@ -37,7 +38,11 @@ class TrieNode {
    *
    * @param key_char Key character of this trie node
    */
-  explicit TrieNode(char key_char) {}
+  explicit TrieNode(char key_char) {
+    key_char_ = key_char;    // 初始化当前节点的值
+    is_end_ = false;          // 当前节点不为最后一个
+    children_.clear();       // 当前节点无孩子节点
+  }
 
   /**
    * TODO(P0): Add implementation
@@ -47,7 +52,11 @@ class TrieNode {
    *
    * @param other_trie_node Old trie node.
    */
-  TrieNode(TrieNode &&other_trie_node) noexcept {}
+  TrieNode(TrieNode &&other_trie_node) noexcept {
+    key_char_ = other_trie_node.key_char_;
+    is_end_ = other_trie_node.is_end_;
+    children_ = std::move(other_trie_node.children_);    // 要用移动语义对其进行赋值
+  }
 
   /**
    * @brief Destroy the TrieNode object.
@@ -62,7 +71,13 @@ class TrieNode {
    * @param key_char Key char of child node.
    * @return True if this trie node has a child with given key, false otherwise.
    */
-  bool HasChild(char key_char) const { return false; }
+  bool HasChild(char key_char) const { 
+    if(this->children_.find(key_char)!=this->children_.end()){
+      return true;
+    }else{
+      return false;
+    }
+  }
 
   /**
    * TODO(P0): Add implementation
@@ -72,7 +87,7 @@ class TrieNode {
    *
    * @return True if this trie node has any child node, false if it has no child node.
    */
-  bool HasChildren() const { return false; }
+  bool HasChildren() const { return !this->children_.empty(); }
 
   /**
    * TODO(P0): Add implementation
@@ -81,7 +96,7 @@ class TrieNode {
    *
    * @return True if is_end_ flag is true, false if is_end_ is false.
    */
-  bool IsEndNode() const { return false; }
+  bool IsEndNode() const { return this->is_end_; }
 
   /**
    * TODO(P0): Add implementation
@@ -90,7 +105,7 @@ class TrieNode {
    *
    * @return key_char_ of this trie node.
    */
-  char GetKeyChar() const { return 'a'; }
+  char GetKeyChar() const { return this->key_char_; }
 
   /**
    * TODO(P0): Add implementation
@@ -111,7 +126,14 @@ class TrieNode {
    * @param child Unique pointer created for the child node. This should be added to children_ map.
    * @return Pointer to unique_ptr of the inserted child node. If insertion fails, return nullptr.
    */
-  std::unique_ptr<TrieNode> *InsertChildNode(char key_char, std::unique_ptr<TrieNode> &&child) { return nullptr; }
+  std::unique_ptr<TrieNode> *InsertChildNode(char key_char, std::unique_ptr<TrieNode> &&child) {
+    if(HasChild(key_char)||key_char!=child->key_char_){
+      return nullptr;
+    }else{
+      this->children_[key_char] = std::forward<std::unique_ptr<TrieNode>>(child);   // forward:是一个模板函数，用于实现完美转发
+      return &this->children_[key_char];
+    }
+  }
 
   /**
    * TODO(P0): Add implementation
@@ -123,7 +145,13 @@ class TrieNode {
    * @return Pointer to unique_ptr of the child node, nullptr if child
    *         node does not exist.
    */
-  std::unique_ptr<TrieNode> *GetChildNode(char key_char) { return nullptr; }
+  std::unique_ptr<TrieNode> *GetChildNode(char key_char) { 
+    if(HasChild(key_char)){
+      return &(this->children_[key_char]);    // 返回子节点指针
+    }else{
+      return nullptr;
+    }
+  }
 
   /**
    * TODO(P0): Add implementation
@@ -133,7 +161,7 @@ class TrieNode {
    *
    * @param key_char Key char of child node to be removed
    */
-  void RemoveChildNode(char key_char) {}
+  void RemoveChildNode(char key_char) {this->children_.erase(key_char);}
 
   /**
    * TODO(P0): Add implementation
@@ -142,7 +170,7 @@ class TrieNode {
    *
    * @param is_end Whether this trie node is ending char of a key string
    */
-  void SetEndNode(bool is_end) {}
+  void SetEndNode(bool is_end) {this->is_end_ = is_end;}
 
  protected:
   /** Key character of this trie node */
@@ -183,7 +211,10 @@ class TrieNodeWithValue : public TrieNode {
    * @param trieNode TrieNode whose data is to be moved to TrieNodeWithValue
    * @param value
    */
-  TrieNodeWithValue(TrieNode &&trieNode, T value) {}
+  TrieNodeWithValue(TrieNode &&trieNode, T value):TrieNode(std::forward<TrieNode>(trieNode)) {
+    value_ = value;
+    SetEndNode(true);         // 将该节点设置为结束节点
+  }
 
   /**
    * TODO(P0): Add implementation
@@ -198,7 +229,10 @@ class TrieNodeWithValue : public TrieNode {
    * @param key_char Key char of this node
    * @param value Value of this node
    */
-  TrieNodeWithValue(char key_char, T value) {}
+  TrieNodeWithValue(char key_char, T value):TrieNode(key_char) {
+    value_ = value;     // 该节点的value值
+    SetEndNode(true);
+  }
 
   /**
    * @brief Destroy the Trie Node With Value object
@@ -231,7 +265,7 @@ class Trie {
    * @brief Construct a new Trie object. Initialize the root node with '\0'
    * character.
    */
-  Trie() = default;
+  Trie() { root_ = std::make_unique<TrieNode>(TrieNode('\0')); }
 
   /**
    * TODO(P0): Add implementation
@@ -259,8 +293,40 @@ class Trie {
    * @param value Value to be inserted
    * @return True if insertion succeeds, false if the key already exists
    */
+   /*插入节点*/
   template <typename T>
   bool Insert(const std::string &key, T value) {
+    // 如果值为空，则返回false
+    if(key.empty()){
+      return false;
+    }
+    latch_.WLock();   // 对树进行加锁
+    auto cur_node = &root_; // 获得根节点，根节点中不存值
+    // 当值不为空时，我们开始进行节点的插入
+    for(size_t i=0;i<key.size();i++){
+
+      // 查看当前节点的孩子是否有当前字符,如果有，则进入孩子节点，如果没有则新建一个节点
+      if(cur_node->get()->HasChild(key[i])){
+        cur_node = cur_node->get()->GetChildNode(key[i]);   // 进入子节点
+      }else{
+        // 将其插入到子节点中
+        cur_node = cur_node->get()->InsertChildNode(key[i],std::make_unique<TrieNode>(key[i])); // 插入一个新节点,并进入子节点
+      }
+
+      // 此时说明，当前值已经是最后一个值了，查看，当前节点是否是尾节点
+      if(i==key.size()-1){
+        // 如果当前节点是尾节点，说明已经存在值了 ,条件3
+        if(cur_node->get()->IsEndNode()){
+          latch_.WUnlock();
+          return false;
+        }
+        // 如果当前节点不是尾节点，则将当前节点添加为尾节点并返回插入成功：条件1，2
+        auto new_node = new TrieNodeWithValue(std::move(**cur_node),value);   // 如果是最后一个则构造一个有值节点，将值存入节点，加入到树中
+        cur_node->reset(new_node);    // 将该节点的unique_ptr存入新节点的指针
+        latch_.WUnlock();            // 对树解锁，操作结束
+        return true;                 // 到此节点插入完毕，返回true
+      }
+    }
     return false;
   }
 
@@ -272,16 +338,67 @@ class Trie {
    * key. If key is empty or not found, return false.
    *
    * You should:
-   * 1) Find the terminal node for the given key.
+   * 1) Find the terminal node for the given ke y.                                 找到给定值的终结点
    * 2) If this terminal node does not have any children, remove it from its
-   * parent's children_ map.
+   * parent's children_ map.                                                       如果终结点没有孩子节点，则从父节点的孩子节点中将其移除，即将尾节点置为，非尾节点
    * 3) Recursively remove nodes that have no children and are not terminal node
-   * of another key.
+   * of another key.                                                               递归移除没有孩子的节点并且不是终结点的节点
    *
    * @param key Key used to traverse the trie and find the correct node
    * @return True if the key exists and is removed, false otherwise
    */
-  bool Remove(const std::string &key) { return false; }
+
+  // 递归删除
+  bool Remove(const std::string &key) { 
+    latch_.WLock();    // 加锁
+    bool a = true;
+    bool* success = &a;     // 标记是否删除成功
+    Dfs(key,&root_,0,success);   // 递归删除
+    latch_.WUnlock();
+    return *success; 
+  }
+  // 递归删除节点，size_t为无符号整形
+  auto Dfs(const std::string &key,std::unique_ptr<TrieNode>*root,size_t index,bool *success)->std::unique_ptr<TrieNode>*{
+    // 到达节点尾部
+    if(index == key.size()){
+      // 当前节点不是尾节点
+      if(!root->get()->IsEndNode()){
+        *success = false;
+        return nullptr;
+      }
+      // 是尾节点，查看是否有子节点，没有子节点的情况
+      if(!root->get()->HasChildren()){
+        *success = true;
+        return nullptr;
+      }
+      // 是尾节点且没有子节点的情况下，对其进行删除-----非物理删除----将尾节点置为非尾节点
+      *success = true;
+      root->get()->SetEndNode(false);
+      return root;
+    }
+    // 未到达尾节点  
+    std::unique_ptr<TrieNode>* node;
+    if(root->get()->HasChild(key[index])){
+      // 继续向下找
+      node = Dfs(key,root->get()->GetChildNode(key[index]),index+1,success);
+      // 未删除成功
+      if(*success==false){
+        return nullptr;
+      }
+      // 删除成功，当没有子节点的时候，将其进行物理删除
+      if(node == nullptr){
+        root->get()->RemoveChildNode(key[index]);
+        // 继续进行删除
+        if(!root->get()->HasChildren()&&!root->get()->IsEndNode()){
+          return nullptr;
+        }
+      }
+      return root;
+    }
+    // 节点为空的情况
+    *success = false;
+    return nullptr;
+  }
 
   /**
    * TODO(P0): Add implementation
@@ -303,7 +420,40 @@ class Trie {
    */
   template <typename T>
   T GetValue(const std::string &key, bool *success) {
+    // 查询为空时，查询失败，并直接返回
+    if(key.empty()){
+      *success = false;
+      return {};
+    }
     *success = false;
+    auto cur_node = &root_; // 获取根节点
+    latch_.RLock();         // 加读锁
+    // 遍历查询该值
+    for(size_t i=0;i<key.size();i++){
+      // 如果当前节点存在于子节点中,那么进入子节点,否则返回false，说明该未查找成功
+      if(cur_node->get()->HasChild(key[i])){
+        cur_node = cur_node->get()->GetChildNode(key[i]);
+      }else{
+        latch_.RUnlock();     // 解锁
+        return {};
+      }
+
+      // 找到了最后一个元素，并且当前节点为终结点，那么返回当前节点的值，并将success设置为true
+      if(i==key.size()-1){
+        // 当前节点为终节点，仅有这一种情况为查找成功
+        if(cur_node->get()->IsEndNode()){
+          auto flag_node = dynamic_cast<TrieNodeWithValue<T> *>(cur_node->get());
+          *success = true;
+          latch_.RUnlock();               // 解锁
+          return flag_node->GetValue();
+        }else{ 
+          // 当前节点不为终结点,没有值，返回
+          latch_.RUnlock();
+          return {};
+        }
+      }
+    }
+    latch_.RLock();    //未进入for循环，解锁
     return {};
   }
 };
