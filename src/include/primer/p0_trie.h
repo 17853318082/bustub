@@ -13,8 +13,10 @@
 #pragma once
 
 #include <memory>
+#include <stack>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -285,7 +287,7 @@ class Trie {
    * @param value Value to be inserted
    * @return True if insertion succeeds, false if the key already exists
    */
-  /* 插入节点 */
+  /* 插入节点--测试通过 */
   template <typename T>
   bool Insert(const std::string &key, T value) {
     // 如果值为空，则返回false
@@ -424,7 +426,7 @@ class Trie {
     latch_.RLock();          // 加读锁
     // 遍历查询该值
     for (size_t i = 0; i < key.size(); i++) {
-      // 如果当前节点存在于子节点中,那么进入子节点,否则返回false，说明该未查找成功
+      // 如果当前节点存在于子节点中,那么进入子节点,否则返回false，说明该节点未查找成功
       if (cur_node->get()->HasChild(key[i])) {
         cur_node = cur_node->get()->GetChildNode(key[i]);
       } else {
@@ -436,7 +438,12 @@ class Trie {
       if (i == key.size() - 1) {
         // 当前节点为终节点，仅有这一种情况为查找成功
         if (cur_node->get()->IsEndNode()) {
-          auto flag_node = dynamic_cast<TrieNodeWithValue<T> *>(cur_node->get());
+          auto flag_node = dynamic_cast<TrieNodeWithValue<T> *>(cur_node->get());  // 判断cur_node节点类型是否为TrieNodeWithValue
+          // 当前节点为空时，返回查询失败
+          if (!flag_node) {
+            *success = false;
+            return {};
+          }
           *success = true;
           latch_.RUnlock();  // 解锁
           return flag_node->GetValue();
@@ -451,3 +458,4 @@ class Trie {
   }
 };
 }  // namespace bustub
+
