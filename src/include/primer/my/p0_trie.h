@@ -70,7 +70,13 @@ class TrieNode {
    * @param key_char Key char of child node.
    * @return True if this trie node has a child with given key, false otherwise.
    */
-  bool HasChild(char key_char) const { return this->children_.find(key_char) != this->children_.end(); }
+  bool HasChild(char key_char) const {
+    if (this->children_.find(key_char) != this->children_.end()) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   /**
    * TODO(P0): Add implementation
@@ -122,10 +128,11 @@ class TrieNode {
   std::unique_ptr<TrieNode> *InsertChildNode(char key_char, std::unique_ptr<TrieNode> &&child) {
     if (HasChild(key_char) || key_char != child->key_char_) {
       return nullptr;
+    } else {
+      this->children_[key_char] =
+          std::forward<std::unique_ptr<TrieNode>>(child);  // forward:是一个模板函数，用于实现完美转发
+      return &this->children_[key_char];
     }
-    this->children_[key_char] =
-        std::forward<std::unique_ptr<TrieNode>>(child);  // forward:是一个模板函数，用于实现完美转发
-    return &this->children_[key_char];
   }
 
   /**
@@ -141,8 +148,9 @@ class TrieNode {
   std::unique_ptr<TrieNode> *GetChildNode(char key_char) {
     if (HasChild(key_char)) {
       return &(this->children_[key_char]);  // 返回子节点指针
+    } else {
+      return nullptr;
     }
-    return nullptr;
   }
 
   /**
@@ -376,7 +384,7 @@ class Trie {
       // 继续向下找
       node = Dfs(key, root->get()->GetChildNode(key[index]), index + 1, success);
       // 未删除成功
-      if (!*success) {
+      if (*success == false) {
         return nullptr;
       }
       // 删除成功，当没有子节点的时候，将其进行物理删除
@@ -440,13 +448,14 @@ class Trie {
           *success = true;
           latch_.RUnlock();  // 解锁
           return flag_node->GetValue();
+        } else {
+          // 当前节点不为终结点,没有值，返回
+          latch_.RUnlock();
+          return {};
         }
-        // 当前节点不为终结点,没有值，返回
-        latch_.RUnlock();
-        return {};
       }
     }
-    latch_.RLock();  // 未进入for循环，解锁
+    latch_.RLock();  //未进入for循环，解锁
     return {};
   }
 };
