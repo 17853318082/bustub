@@ -42,6 +42,7 @@ class ExtendibleHashTable : public HashTable<K, V> {
    * @brief Create a new ExtendibleHashTable.
    * @param bucket_size: fixed size for each bucket
    */
+  /* explicit：当使用该关键字声明构造时，表示防止在程序中进行隐式类型转换 */
   explicit ExtendibleHashTable(size_t bucket_size);
 
   /**
