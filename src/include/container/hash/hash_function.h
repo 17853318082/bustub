@@ -18,12 +18,13 @@
 
 namespace bustub {
 
+/* 作用：将key转换为响应的hash值，用来寻找桶的位置 */
 template <typename KeyType>
 class HashFunction {
  public:
   /**
-   * @param key the key to be hashed
-   * @return the hashed value
+   * @param key the key to be hashed 输入hash表的key
+   * @return the hashed value  返回hash的value
    */
   virtual auto GetHash(KeyType key) -> uint64_t {
     uint64_t hash[2];

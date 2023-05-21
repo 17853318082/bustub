@@ -25,9 +25,9 @@ class HashTable {
   HashTable() = default;
   virtual ~HashTable() = default;
   // lookup and modifier
-  virtual auto Find(const K &key, V &value) -> bool = 0;
-  virtual auto Remove(const K &key) -> bool = 0;
-  virtual void Insert(const K &key, const V &value) = 0;
+  virtual auto Find(const K &key, V &value) -> bool = 0; // 查找
+  virtual auto Remove(const K &key) -> bool = 0;     // 移除
+  virtual void Insert(const K &key, const V &value) = 0;  // s插入
 };
 
 }  // namespace bustub
