@@ -148,11 +148,11 @@ class BufferPoolManagerInstance : public BufferPoolManager {
   const size_t bucket_size_ = 4;
 
   /** Array of buffer pool pages. */
-  Page *pages_;
+  Page *pages_;   // 缓存池页列表
   /** Pointer to the disk manager. */
-  DiskManager *disk_manager_ __attribute__((__unused__));
+  DiskManager *disk_manager_ __attribute__((__unused__)); // 磁盘管理指针
   /** Pointer to the log manager. Please ignore this for P1. */
-  LogManager *log_manager_ __attribute__((__unused__));
+  LogManager *log_manager_ __attribute__((__unused__));  // 日志管理指针
   /** Page table for keeping track of buffer pool pages. */
   ExtendibleHashTable<page_id_t, frame_id_t> *page_table_;
   /** Replacer to find unpinned pages for replacement. */

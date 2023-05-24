@@ -144,12 +144,13 @@ class LRUKReplacer {
   size_t k_;             // LRU-K中的K，选择第几次，加入到缓存队列中
   std::mutex latch_;    // 读写锁
 
-  std::unordered_map<frame_id_t,int> count_; // 用于记录访问队列中，页面出现的次数
+  std::unordered_map<frame_id_t,size_t> count_; // 用于记录访问队列中，页面出现的次数
   std::list<frame_id_t> history_list_; // 用于记录页面的访问历史，使用FIFO
+  std::unordered_map<frame_id_t,std::list<frame_id_t>::iterator> history_map_; // 记录迭代器位置
   
   std::list<frame_id_t> cache_list_;// 用于记录缓存页面列表，使用LRU
-  // std::unordered_map<frame_id_t,std::list<frame_id_t>::iterator> cache_map_; // 用于记录页面迭代器位置，减小访问时间
-  std::unordered_map<frame_id_t,bool> is_evictable; // 用于记录当前页面能否被置换
+  std::unordered_map<frame_id_t,std::list<frame_id_t>::iterator> cache_map_; // 用于记录页面迭代器位置，减小访问时间
+  std::unordered_map<frame_id_t,bool> is_evictable_; // 用于记录当前页面能否被置换
 };
 
 }  // namespace bustub
