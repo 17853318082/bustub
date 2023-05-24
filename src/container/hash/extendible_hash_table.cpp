@@ -135,7 +135,7 @@ void ExtendibleHashTable<K, V>::Insert(const K &key, const V &value) {
       }
     }
 
-    // 以进行完目录扩充或者当前桶已满-->桶分裂 -- 将原先的桶分裂为两个桶,桶深度*2
+    // 桶深度<全局深度-->桶分裂 -- 将原先的桶分裂为两个桶,桶深度*2
     int mask = 1 << target_bucket->GetDepth();
     auto bucket_0 = std::make_shared<Bucket>(bucket_size_, target_bucket->GetDepth() + 1);
     auto bucket_1 = std::make_shared<Bucket>(bucket_size_, target_bucket->GetDepth() + 1);
@@ -161,10 +161,9 @@ void ExtendibleHashTable<K, V>::Insert(const K &key, const V &value) {
       }
     }
   }
-  // 如果桶未满
+  // 如果桶未满 --> 执行插入
   auto index = IndexOf(key);
   auto target_bucket = this->dir_[index];
-  // 执行插入
   target_bucket->Insert(key, value);
 }
 

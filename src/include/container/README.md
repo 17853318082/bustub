@@ -24,5 +24,5 @@
 ### 参考连接
 参考连接1：https://ym9omojhd5.feishu.cn/docx/Fk5MdLNJuopJGaxcDHncC9wZnDg --飞书 <br>
 参考连接2：https://www.geeksforgeeks.org/extendible-hashing-dynamic-approach-to-dbms/ --可扩充哈希-英文文档<br>
-参考连接3：zhihu.com/question/476720214/answer/2857876888 -- 可扩充hash-知乎<br>
+参考连接3：https://www.zhihu.com/question/476720214/answer/2857876888 -- 可扩充hash-知乎<br>
 

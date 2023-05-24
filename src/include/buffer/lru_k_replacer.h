@@ -17,6 +17,7 @@
 #include <mutex>  // NOLINT
 #include <unordered_map>
 #include <vector>
+#include <algorithm>
 
 #include "common/config.h"
 #include "common/macros.h"
@@ -77,9 +78,11 @@ class LRUKReplacer {
    *
    * @brief Record the event that the given frame id is accessed at current timestamp.
    * Create a new entry for access history if frame id has not been seen before.
+   * 记录给定页面id当前进入的时间戳。如果再次之前没有进入记录则将当前页面id加入到记录中
    *
    * If frame id is invalid (ie. larger than replacer_size_), throw an exception. You can
    * also use BUSTUB_ASSERT to abort the process if frame id is invalid.
+   * 如果页面id是无效的，则抛出异常。
    *
    * @param frame_id id of frame that received a new access.
    */
@@ -135,11 +138,18 @@ class LRUKReplacer {
  private:
   // TODO(student): implement me! You can replace these member variables as you like.
   // Remove maybe_unused if you start using them.
-  [[maybe_unused]] size_t current_timestamp_{0};
-  [[maybe_unused]] size_t curr_size_{0};
-  [[maybe_unused]] size_t replacer_size_;
-  [[maybe_unused]] size_t k_;
-  std::mutex latch_;
+  [[maybe_unused]] size_t current_timestamp_{0}; // 当前时间戳
+  size_t curr_size_{0};   // 当前可驱逐页面的数量
+  size_t replacer_size_;  // 替换尺寸，用于替换的大小
+  size_t k_;             // LRU-K中的K，选择第几次，加入到缓存队列中
+  std::mutex latch_;    // 读写锁
+
+  std::unordered_map<frame_id_t,int> count_; // 用于记录访问队列中，页面出现的次数
+  std::list<frame_id_t> history_list_; // 用于记录页面的访问历史，使用FIFO
+  
+  std::list<frame_id_t> cache_list_;// 用于记录缓存页面列表，使用LRU
+  // std::unordered_map<frame_id_t,std::list<frame_id_t>::iterator> cache_map_; // 用于记录页面迭代器位置，减小访问时间
+  std::unordered_map<frame_id_t,bool> is_evictable; // 用于记录当前页面能否被置换
 };
 
 }  // namespace bustub
