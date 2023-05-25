@@ -58,12 +58,13 @@ class BufferPoolManagerInstance : public BufferPoolManager {
    *
    * @brief Create a new page in the buffer pool. Set page_id to the new page's id, or nullptr if all frames
    * are currently in use and not evictable (in another word, pinned).
-   *
+   * 在缓冲池中创建一个新的页面。设置page_id为新页面的id，如果所有frame都当前被固定并因此不能用于清除，则返回一个空指针。
    * You should pick the replacement frame from either the free list or the replacer (always find from the free list
    * first), and then call the AllocatePage() method to get a new page id. If the replacement frame has a dirty page,
    * you should write it back to the disk first. You also need to reset the memory and metadata for the new page.
-   *
-   * Remember to "Pin" the frame by calling replacer.SetEvictable(frame_id, false)
+   * 你应该从空闲列表或替换器中选择要替换的frame（总是首先从空闲列表中查找），然后调用AllocatePage()方法获取一个新的页面ID。
+   * 如果要替换的frame有一个脏页（即已被修改但尚未写回磁盘），你应该首先将其写回磁盘。你还需要重置新页面的内存和元数据。
+   * Remember to "Pin" the frame by calling replace r.SetEvictable(frame_id, false)
    * so that the replacer wouldn't evict the frame before the buffer pool manager "Unpin"s it.
    * Also, remember to record the access history of the frame in the replacer for the lru-k algorithm to work.
    *
@@ -77,14 +78,16 @@ class BufferPoolManagerInstance : public BufferPoolManager {
    *
    * @brief Fetch the requested page from the buffer pool. Return nullptr if page_id needs to be fetched from the disk
    * but all frames are currently in use and not evictable (in another word, pinned).
-   *
+   * 从缓冲池中获取所请求的页面。如果page_id需要从磁盘获取，但所有frame当前都在使用且不可清除（换句话说，被固定），则返回nullptr。
    * First search for page_id in the buffer pool. If not found, pick a replacement frame from either the free list or
    * the replacer (always find from the free list first), read the page from disk by calling disk_manager_->ReadPage(),
    * and replace the old page in the frame. Similar to NewPgImp(), if the old page is dirty, you need to write it back
    * to disk and update the metadata of the new page
-   *
+   * 首先在缓冲池中搜索page_id。如果没有找到，则从空闲列表或替换器中选择一个替换的frame（总是首先从空闲列表中查找），
+   * 通过调用disk_manager_->ReadPage()方法从磁盘中读取页面，并将旧页面替换到该frame中。
+   * 与NewPgImp()类似，如果旧页面是脏页，你需要将它写回磁盘并更新新页面的元数据。
    * In addition, remember to disable eviction and record the access history of the frame like you did for NewPgImp().
-   *
+   * 此外，记得像NewPgImp()函数一样禁用驱逐并记录frame的访问历史
    * @param page_id id of page to be fetched
    * @return nullptr if page_id cannot be fetched, otherwise pointer to the requested page
    */
@@ -95,13 +98,15 @@ class BufferPoolManagerInstance : public BufferPoolManager {
    *
    * @brief Unpin the target page from the buffer pool. If page_id is not in the buffer pool or its pin count is already
    * 0, return false.
-   *
+   * 从缓冲池中取消固定（Unpin）目标页面。如果page_id不在缓冲池中或它的固定计数已经为0，则返回false。
    * Decrement the pin count of a page. If the pin count reaches 0, the frame should be evictable by the replacer.
    * Also, set the dirty flag on the page to indicate if the page was modified.
-   *
+   * 减少页面的固定计数。如果固定计数达到了0，则替换器可以清除该frame。此外，设置页面的脏标志以指示页面是否已被修改。
    * @param page_id id of page to be unpinned
    * @param is_dirty true if the page should be marked as dirty, false otherwise
+   * 如果页面应该被标记为脏页，则返回true，否则返回false
    * @return false if the page is not in the page table or its pin count is <= 0 before this call, true otherwise
+   * 如果页面不在页面表中或者在调用此函数之前其固定计数<=0，则返回false，否则返回true。
    */
   auto UnpinPgImp(page_id_t page_id, bool is_dirty) -> bool override;
 
@@ -109,12 +114,14 @@ class BufferPoolManagerInstance : public BufferPoolManager {
    * TODO(P1): Add implementation
    *
    * @brief Flush the target page to disk.
+   * 从磁盘中获取目标页
    *
    * Use the DiskManager::WritePage() method to flush a page to disk, REGARDLESS of the dirty flag.
    * Unset the dirty flag of the page after flushing.
-   *
+   * 使用DiskManager::WritePage()方法将页面刷新到磁盘，而不考虑页面的脏标志。在刷新后取消页面的脏标志。
    * @param page_id id of page to be flushed, cannot be INVALID_PAGE_ID
    * @return false if the page could not be found in the page table, true otherwise
+   * 如果在页面表中找不到页面，则返回false，否则返回true。
    */
   auto FlushPgImp(page_id_t page_id) -> bool override;
 
@@ -122,6 +129,7 @@ class BufferPoolManagerInstance : public BufferPoolManager {
    * TODO(P1): Add implementation
    *
    * @brief Flush all the pages in the buffer pool to disk.
+   * 从缓冲池磁盘中获取所有页
    */
   void FlushAllPgsImp() override;
 
@@ -130,13 +138,14 @@ class BufferPoolManagerInstance : public BufferPoolManager {
    *
    * @brief Delete a page from the buffer pool. If page_id is not in the buffer pool, do nothing and return true. If the
    * page is pinned and cannot be deleted, return false immediately.
-   *
+   * 删除一个页面从缓冲池中，如果页面不在缓冲池中，则删么也不做并返回true，如果页面是被固定的则不能被删除并立刻返回false
    * After deleting the page from the page table, stop tracking the frame in the replacer and add the frame
    * back to the free list. Also, reset the page's memory and metadata. Finally, you should call DeallocatePage() to
    * imitate freeing the page on the disk.
-   *
-   * @param page_id id of page to be deleted
+   * 从页面列表删除页面之后，停止从置换器中跟踪该frame，并将frame重新添加到空闲列表中
+   * @param page_id id of page to be deleted 
    * @return false if the page exists but could not be deleted, true if the page didn't exist or deletion succeeded
+   * 如果页面存在但不能被删除则返回false，如果页面不存在或者删除成功则返回true
    */
   auto DeletePgImp(page_id_t page_id) -> bool override;
 
@@ -146,6 +155,9 @@ class BufferPoolManagerInstance : public BufferPoolManager {
   std::atomic<page_id_t> next_page_id_ = 0;
   /** Bucket size for the extendible hash table */
   const size_t bucket_size_ = 4;
+  
+  // frame_id->页面在缓存池也列表中的位置
+  // page_id->页面的编号，唯一标识
 
   /** Array of buffer pool pages. */
   Page *pages_;   // 缓存池页列表
@@ -154,13 +166,13 @@ class BufferPoolManagerInstance : public BufferPoolManager {
   /** Pointer to the log manager. Please ignore this for P1. */
   LogManager *log_manager_ __attribute__((__unused__));  // 日志管理指针
   /** Page table for keeping track of buffer pool pages. */
-  ExtendibleHashTable<page_id_t, frame_id_t> *page_table_;
+  ExtendibleHashTable<page_id_t, frame_id_t> *page_table_; // Page表，用于跟踪缓冲池页面,保存page_id,fram_id
   /** Replacer to find unpinned pages for replacement. */
-  LRUKReplacer *replacer_;
+  LRUKReplacer *replacer_;  // 使用置换器查找未固定的页面
   /** List of free frames that don't have any pages on them. */
-  std::list<frame_id_t> free_list_;
+  std::list<frame_id_t> free_list_; // 空闲页面编号列表
   /** This latch protects shared data structures. We recommend updating this comment to describe what it protects. */
-  std::mutex latch_;
+  std::mutex latch_;  // 锁
 
   /**
    * @brief Allocate a page on disk. Caller should acquire the latch before calling this function.

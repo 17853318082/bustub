@@ -37,7 +37,7 @@ class BufferPoolManager {
    */
   virtual ~BufferPoolManager() = default;
 
-  /** Grading function. Do not modify! */
+  /** Grading function. Do not modify! 获取页面*/
   auto FetchPage(page_id_t page_id, bufferpool_callback_fn callback = nullptr) -> Page * {
     GradingCallback(callback, CallbackType::BEFORE, page_id);
     auto *result = FetchPgImp(page_id);
@@ -45,7 +45,7 @@ class BufferPoolManager {
     return result;
   }
 
-  /** Grading function. Do not modify! */
+  /** Grading function. Do not modify! 取消固定*/
   auto UnpinPage(page_id_t page_id, bool is_dirty, bufferpool_callback_fn callback = nullptr) -> bool {
     GradingCallback(callback, CallbackType::BEFORE, page_id);
     auto result = UnpinPgImp(page_id, is_dirty);
@@ -53,7 +53,7 @@ class BufferPoolManager {
     return result;
   }
 
-  /** Grading function. Do not modify! */
+  /** Grading function. Do not modify! 刷新页面*/
   auto FlushPage(page_id_t page_id, bufferpool_callback_fn callback = nullptr) -> bool {
     GradingCallback(callback, CallbackType::BEFORE, page_id);
     auto result = FlushPgImp(page_id);
@@ -61,7 +61,7 @@ class BufferPoolManager {
     return result;
   }
 
-  /** Grading function. Do not modify! */
+  /** Grading function. Do not modify! 新建页面*/
   auto NewPage(page_id_t *page_id, bufferpool_callback_fn callback = nullptr) -> Page * {
     GradingCallback(callback, CallbackType::BEFORE, INVALID_PAGE_ID);
     auto *result = NewPgImp(page_id);

@@ -13,3 +13,18 @@
 (5)需要淘汰数据时，淘汰缓存队列中排在末尾的数据;<br><br>
 LRU-K具有LRU的优点，同时避免LRU的缺点，实际应用中LRU-2是综合各种因素后的最优选择，LRU-3或者更大的K值命中率会高，但适应性差，需要大量的数据访问才能将历史访问记录清除掉
 <br><br>
+
+
+## 缓存池管理示例 buffer_pool_manage_instance
+### 变量含义：
+  Page *pages_;   // 缓存池页列表 <br><br>
+  DiskManager *disk_manager_ __attribute__((__unused__)); // 磁盘管理指针<br><br>
+  LogManager *log_manager_ __attribute__((__unused__));  // 日志管理指针<br><br>
+  ExtendibleHashTable<page_id_t, frame_id_t> *page_table_; // Page表，用于跟踪缓冲池页面,保存page_id,frame_id<br><br>
+  LRUKReplacer *replacer_;  // 使用置换器查找未固定的页面 <br><br>
+  std::list<frame_id_t> free_list_; // 空闲页面编号列表 <br><br>
+  std::mutex latch_;  // 锁  <br><br>
+
+### NewPgImp流程图
+![NewPgImp流程图](../../imgs/NewPgImp.jpg "NewPgImp流程图")
+<br><br><br>

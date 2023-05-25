@@ -24,6 +24,8 @@ namespace bustub {
  * Page is the basic unit of storage within the database system. Page provides a wrapper for actual data pages being
  * held in main memory. Page also contains book-keeping information that is used by the buffer pool manager, e.g.
  * pin count, dirty flag, page id, etc.
+ * 在数据库系统中，Page是存储的基本单位。Page提供了对实际数据页的包装，这些数据页被保存在主内存中。
+ * Page还包含了缓冲池管理器使用的簿记信息，例如固定计数、脏标志、页面ID等。
  */
 class Page {
   // There is book-keeping information inside the page that should only be relevant to the buffer pool manager.

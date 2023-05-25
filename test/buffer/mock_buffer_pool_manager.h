@@ -134,8 +134,11 @@ class MockBufferPoolManager : public BufferPoolManagerInstance {
   /**
    * Unpin the target page from the buffer pool.
    * @param page_id id of page to be unpinned
+   * 
    * @param is_dirty true if the page should be marked as dirty, false otherwise
+   * 如果页面应该被标记未脏页则传入true 否则传入false
    * @return false if the page pin count is <= 0 before this call, true otherwise
+   * 如果在调用此函数之前页面的固定计数<=0，则UnpinPage会返回false，否则返回true。
    */
   bool UnpinPgImp(page_id_t page_id, bool is_dirty) {
     counter.AddCount(FuncType::UnpinPage);

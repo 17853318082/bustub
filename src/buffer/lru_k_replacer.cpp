@@ -147,7 +147,7 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id) {
  */
 
 void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
-  std::cout << "设置驱逐" << std::endl;
+  // std::cout << "设置驱逐" << std::endl;
   // 加锁
   std::scoped_lock<std::mutex> lock(latch_);
   // frame_id 是否有效,是否包含在缓存中
@@ -168,7 +168,7 @@ void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
       curr_size_--;
     }
   }
-  std::cout << "结束设置驱逐" << std::endl;
+  // std::cout << "结束设置驱逐" << std::endl;
   // 其他情况不做处理
 }
 
