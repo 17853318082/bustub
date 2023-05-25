@@ -4,7 +4,7 @@
 
 工作原理：相比LRU，LRU-K需要多维护一个队列，用于记录所有缓存数据被访问的历史。只有当数据的访问次数达到K次的时候，才将数据放入缓存。当需要淘汰数据时，LRU-K会淘汰第K次访问时间距当前时间最大的数据。<br><br><br>
 
-![LRU-K](../../imgs/LRU-K.png "LRU-K")
+![LRU-K](../imgs/LRU-K.png "LRU-K")
 <br><br><br>
 (1)数据第一次欸访问，加入到访问历史列表;<br><br>
 (2)如果数据在访问列表后就没有达到K次访问，则按照一定规则(FIFO,LRU)淘汰;<br><br>
@@ -26,9 +26,9 @@ LRU-K具有LRU的优点，同时避免LRU的缺点，实际应用中LRU-2是综�
   std::mutex latch_;  // 锁  <br><br>
 
 ### NewPgImp流程图
-![NewPgImp流程图](../../imgs/NewPgImp.jpg "NewPgImp流程图")
+![NewPgImp流程图](../imgs/NewPgImp.jpg "NewPgImp流程图")
 <br><br><br>
 
 ### FetchPgImp流程图
-![FetchPgImp流程图](../../imgs/FetchPgImp.jpg "FetchPgImp流程图")
+![FetchPgImp流程图](../imgs/FetchPgImp.jpg "FetchPgImp流程图")
 <br><br><br>

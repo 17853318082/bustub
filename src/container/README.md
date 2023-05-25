@@ -10,7 +10,7 @@
 目录扩充(directory expansion):当桶溢出时，产生目录扩容。当溢出桶的局部深度等于全局深度时，目录扩容被执行。<br><br>
 
 ### 可扩展hash基本流程：
-![可扩展hash执行流程](../../imgs/Basic-Working-of-Extendible-Hashing.png "可扩展hash执行流程")
+![可扩展hash执行流程](../imgs/Basic-Working-of-Extendible-Hashing.png "可扩展hash执行流程")
 <br><br>
 注意：1-4步为hash函数检测bucket索引的操作，5-9为根据索引找到响应的桶进行插入操作<br><br>
 步骤1：分析数据元素：数据元素可能以各种形式存在，比如整形，字符串，浮点数等等...当前，我们考虑整形这类数据元素，比如49。<br><br>
