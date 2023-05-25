@@ -28,3 +28,7 @@ LRU-K具有LRU的优点，同时避免LRU的缺点，实际应用中LRU-2是综�
 ### NewPgImp流程图
 ![NewPgImp流程图](../../imgs/NewPgImp.jpg "NewPgImp流程图")
 <br><br><br>
+
+### FetchPgImp流程图
+![FetchPgImp流程图](../../imgs/FetchPgImp.jpg "FetchPgImp流程图")
+<br><br><br>
