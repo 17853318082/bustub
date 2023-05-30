@@ -164,6 +164,7 @@ void ExtendibleHashTable<K, V>::Insert(const K &key, const V &value) {
   // 如果桶未满 --> 执行插入
   auto index = IndexOf(key);
   auto target_bucket = this->dir_[index];
+
   target_bucket->Insert(key, value);
 }
 
@@ -241,20 +242,20 @@ auto ExtendibleHashTable<K, V>::Bucket::Remove(const K &key) -> bool {
  */
 template <typename K, typename V>
 auto ExtendibleHashTable<K, V>::Bucket::Insert(const K &key, const V &value) -> bool {
-  // 查看bucket是否已满，如果已满则返回false
-  if (this->IsFull()) {
-    return false;
-  }
-  // 如果bucket的未满，则进行插入操作
-  for (auto v : this->list_) {
+  // 先查看当前桶中是否有key，如果有的替换当前value
+  for (auto &v : this->GetItems()) {
     // 如果key已经存在于bucket则更新value,并返回true
     if (v.first == key) {
       v.second = value;
       return true;
     }
   }
+  // 如果bucket已满则返回false，如果未满则进行插入操作，将值插入到尾部
+  if (this->IsFull()) {
+    return false;
+  }
   // 此时表明key不在bucket中，则插入key，value，在尾部插入
-  this->list_.push_back(std::make_pair(key, value));
+  this->list_.emplace_back(key, value);
   return true;
 }
 

@@ -48,10 +48,10 @@ auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
     // 查看该页面是否可驱逐，如果可驱逐则进行驱逐
     if (is_evictable_[frame]) {
       // 执行驱逐
-      history_list_.erase(history_map_[frame]);  // 将反向迭代器置为正向迭代器用于删除
+      count_[frame] = 0;    // 访问记录清空
+      history_list_.erase(history_map_[frame]);
       history_map_.erase(frame);
       curr_size_--;
-      count_[frame] = 0;             // 访问记录清空
       is_evictable_[frame] = false;  // 标记为不可驱逐
       *frame_id = frame;
       return true;
@@ -74,6 +74,42 @@ auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
   // 其他情况 返回false
   return false;
 }
+
+// auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
+//   std::scoped_lock<std::mutex> lock(latch_);
+
+//   if (curr_size_ == 0) {
+//     return false;
+//   }
+
+//   for (auto it = history_list_.rbegin(); it != history_list_.rend(); it++) {
+//     auto frame = *it;
+//     if (is_evictable_[frame]) {
+//       count_[frame] = 0;
+//       history_list_.erase(history_map_[frame]);
+//       history_map_.erase(frame);
+//       *frame_id = frame;
+//       curr_size_--;
+//       is_evictable_[frame] = false;
+//       return true;
+//     }
+//   }
+
+//   for (auto it = cache_list_.rbegin(); it != cache_list_.rend(); it++) {
+//     auto frame = *it;
+//     if (is_evictable_[frame]) {
+//       count_[frame] = 0;
+//       cache_list_.erase(cache_map_[frame]);
+//       cache_map_.erase(frame);
+//       *frame_id = frame;
+//       curr_size_--;
+//       is_evictable_[frame] = false;
+//       return true;
+//     }
+//   }
+
+//   return false;
+// }
 
 /**
  * TODO(P1): Add implementation
@@ -125,7 +161,6 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id) {
   }
 }
 
-
 /**
  * TODO(P1): Add implementation
  *
@@ -151,8 +186,12 @@ void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
   // 加锁
   std::scoped_lock<std::mutex> lock(latch_);
   // frame_id 是否有效,是否包含在缓存中
-  if (count_[frame_id] == 0) {
+  if (frame_id>static_cast<int>(replacer_size_)) {
     throw std::exception();
+  }
+  // 如果当前元素不存在则终止
+  if (count_[frame_id] == 0) {
+    return;
   }
   // 查看驱逐设置 --> 将页面设置为可驱逐
   if (set_evictable) {
@@ -168,6 +207,7 @@ void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
       curr_size_--;
     }
   }
+  is_evictable_[frame_id] = set_evictable;
   // std::cout << "结束设置驱逐" << std::endl;
   // 其他情况不做处理
 }
@@ -201,27 +241,41 @@ void LRUKReplacer::Remove(frame_id_t frame_id) {
   if (!is_evictable_[frame_id]) {
     throw std::exception();
   }
-  // 查看是否在历史访问列表
-  for (auto it = history_list_.begin(); it != history_list_.end(); it++) {
-    // 从历史例表中找到该页面，执行删除
-    if (*it == frame_id) {
-      history_list_.erase(it);
-      count_[frame_id] = 0;
-      curr_size_--;
-      is_evictable_[frame_id] = false;
-      return;
-    }
+  size_t count = count_[frame_id];
+  // 说明在历史列表中
+  if (count < k_) {
+    history_list_.erase(history_map_[frame_id]);
+    history_map_.erase(frame_id);
+  } else {
+    // 说明在缓存列表中
+    cache_list_.erase(cache_map_[frame_id]);
+    cache_map_.erase(frame_id);
   }
-  // 查看是否在缓存列表中
-  for (auto it = cache_list_.begin(); it != cache_list_.end(); it++) {
-    if (*it == frame_id) {
-      cache_list_.erase(it);
-      count_[frame_id] = 0;
-      curr_size_--;
-      is_evictable_[frame_id] = false;
-      return;
-    }
-  }
+  curr_size_--;
+  count_[frame_id] = 0;
+  is_evictable_[frame_id] = false;
+
+  // // 查看是否在历史访问列表
+  // for (auto it = history_list_.begin(); it != history_list_.end(); it++) {
+  //   // 从历史例表中找到该页面，执行删除
+  //   if (*it == frame_id) {
+  //     history_list_.erase(it);
+  //     count_[frame_id] = 0;
+  //     curr_size_--;
+  //     is_evictable_[frame_id] = false;
+  //     return;
+  //   }
+  // }
+  // // 查看是否在缓存列表中
+  // for (auto it = cache_list_.begin(); it != cache_list_.end(); it++) {
+  //   if (*it == frame_id) {
+  //     cache_list_.erase(it);
+  //     count_[frame_id] = 0;
+  //     curr_size_--;
+  //     is_evictable_[frame_id] = false;
+  //     return;
+  //   }
+  // }
 }
 
 auto LRUKReplacer::Size() -> size_t {

@@ -438,7 +438,8 @@ class Trie {
       if (i == key.size() - 1) {
         // 当前节点为终节点，仅有这一种情况为查找成功
         if (cur_node->get()->IsEndNode()) {
-          auto flag_node = dynamic_cast<TrieNodeWithValue<T> *>(cur_node->get());  // 判断cur_node节点类型是否为TrieNodeWithValue
+          auto flag_node =
+              dynamic_cast<TrieNodeWithValue<T> *>(cur_node->get());  // 判断cur_node节点类型是否为TrieNodeWithValue
           // 当前节点为空时，返回查询失败
           if (!flag_node) {
             *success = false;
@@ -458,4 +459,3 @@ class Trie {
   }
 };
 }  // namespace bustub
-

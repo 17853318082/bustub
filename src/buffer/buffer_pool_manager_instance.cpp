@@ -209,7 +209,9 @@ auto BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) -> 
   frame_id_t frame_id;
   // 查看缓冲池中是否有当前页面
   if (page_table_->Find(page_id, frame_id)) {
-    pages_[frame_id].is_dirty_ = is_dirty;  // 设置页面脏标志
+    if (is_dirty) {
+      pages_[frame_id].is_dirty_ = is_dirty;  // 设置页面脏标志
+    }
     // 有当前页面在页面列表中，查看当前页面的pincount是否为0，如果为0返回false
     if (pages_[frame_id].GetPinCount() > 0) {
       // 减少固定计数

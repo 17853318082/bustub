@@ -143,7 +143,7 @@ class BufferPoolManagerInstance : public BufferPoolManager {
    * back to the free list. Also, reset the page's memory and metadata. Finally, you should call DeallocatePage() to
    * imitate freeing the page on the disk.
    * 从页面列表删除页面之后，停止从置换器中跟踪该frame，并将frame重新添加到空闲列表中
-   * @param page_id id of page to be deleted 
+   * @param page_id id of page to be deleted
    * @return false if the page exists but could not be deleted, true if the page didn't exist or deletion succeeded
    * 如果页面存在但不能被删除则返回false，如果页面不存在或者删除成功则返回true
    */
@@ -155,22 +155,22 @@ class BufferPoolManagerInstance : public BufferPoolManager {
   std::atomic<page_id_t> next_page_id_ = 0;
   /** Bucket size for the extendible hash table */
   const size_t bucket_size_ = 4;
-  
+
   // frame_id->页面在缓存池也列表中的位置
   // page_id->页面的编号，唯一标识
 
   /** Array of buffer pool pages. */
-  Page *pages_;   // 缓存池页列表
+  Page *pages_;  // 缓存池页列表
   /** Pointer to the disk manager. */
-  DiskManager *disk_manager_ __attribute__((__unused__)); // 磁盘管理指针
+  DiskManager *disk_manager_ __attribute__((__unused__));  // 磁盘管理指针
   /** Pointer to the log manager. Please ignore this for P1. */
   LogManager *log_manager_ __attribute__((__unused__));  // 日志管理指针
   /** Page table for keeping track of buffer pool pages. */
-  ExtendibleHashTable<page_id_t, frame_id_t> *page_table_; // Page表，用于跟踪缓冲池页面,保存page_id,fram_id
+  ExtendibleHashTable<page_id_t, frame_id_t> *page_table_;  // Page表，用于跟踪缓冲池页面,保存page_id,fram_id
   /** Replacer to find unpinned pages for replacement. */
   LRUKReplacer *replacer_;  // 使用置换器查找未固定的页面
   /** List of free frames that don't have any pages on them. */
-  std::list<frame_id_t> free_list_; // 空闲页面编号列表
+  std::list<frame_id_t> free_list_;  // 空闲页面编号列表
   /** This latch protects shared data structures. We recommend updating this comment to describe what it protects. */
   std::mutex latch_;  // 锁
 
