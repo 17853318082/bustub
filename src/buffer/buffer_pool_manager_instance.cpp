@@ -87,7 +87,7 @@ auto BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) -> Page * {
       page_id_t evict_page_id = pages_[frame_id].GetPageId();
       // 查看要替换的页面是否是一个脏页,如果是将修改写入磁盘
       if (pages_[frame_id].IsDirty()) {
-        this->disk_manager_->WritePage(evict_page_id, pages_[frame_id].GetData());  // 写入磁盘
+        disk_manager_->WritePage(evict_page_id, pages_[frame_id].GetData());  // 写入磁盘
         pages_[frame_id].is_dirty_ = false;
       }
       // 刷新页面
@@ -164,7 +164,7 @@ auto BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) -> Page * {
       page_id_t evicted_page_id = pages_[frame_id].GetPageId();
       // 查看要替换的页面是否是一个脏页,如果是将修改写入磁盘
       if (pages_[frame_id].IsDirty()) {
-        this->disk_manager_->WritePage(evicted_page_id, pages_[frame_id].GetData());  // 写入磁盘
+        disk_manager_->WritePage(evicted_page_id, pages_[frame_id].GetData());  // 写入磁盘
         pages_[frame_id].is_dirty_ = false;
       }
       // 刷新页面

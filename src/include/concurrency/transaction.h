@@ -154,7 +154,7 @@ class TransactionAbortException : public std::exception {
 };
 
 /**
- * Transaction tracks information related to a transaction.
+ * Transaction tracks information related to a transaction. 跟踪与交换相关信息
  */
 class Transaction {
  public:

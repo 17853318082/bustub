@@ -26,7 +26,7 @@ template <typename K, typename V>
 ExtendibleHashTable<K, V>::ExtendibleHashTable(size_t bucket_size)
     : global_depth_(0), bucket_size_(bucket_size), num_buckets_(1) {
   // 对目录进行初始化-- 创建一个桶大小为bucket_size ，并放入目录
-  this->dir_.push_back(std::make_shared<Bucket>(bucket_size, 0));
+  dir_.push_back(std::make_shared<Bucket>(bucket_size, 0));
 }
 
 /** 根据key查找桶索引 */
@@ -75,10 +75,10 @@ auto ExtendibleHashTable<K, V>::GetNumBucketsInternal() const -> int {
 template <typename K, typename V>
 auto ExtendibleHashTable<K, V>::Find(const K &key, V &value) -> bool {
   // 加锁
-  std::unique_lock<std::mutex> lock(this->latch_);
+  std::unique_lock<std::mutex> lock(latch_);
   // 寻找所在的桶
   auto index = IndexOf(key);
-  auto target_bucket = this->dir_[index];
+  auto target_bucket = dir_[index];
   // 执行桶查找
   return target_bucket->Find(key, value);
 }
@@ -86,10 +86,10 @@ auto ExtendibleHashTable<K, V>::Find(const K &key, V &value) -> bool {
 template <typename K, typename V>
 auto ExtendibleHashTable<K, V>::Remove(const K &key) -> bool {
   // 加锁
-  std::scoped_lock<std::mutex> lock(this->latch_);
+  std::scoped_lock<std::mutex> lock(latch_);
   // 获得寻找所在的桶
   auto index = IndexOf(key);
-  auto target_bucket = this->dir_[index];
+  auto target_bucket = dir_[index];
   // 执行 删除
   return target_bucket->Remove(key);
 }
@@ -115,23 +115,23 @@ auto ExtendibleHashTable<K, V>::Remove(const K &key) -> bool {
 template <typename K, typename V>
 void ExtendibleHashTable<K, V>::Insert(const K &key, const V &value) {
   // 加锁 -- 自动解锁，使用RAII机制，在作用域结束时自动释放锁
-  std::scoped_lock<std::mutex> lock(this->latch_);
+  std::scoped_lock<std::mutex> lock(latch_);
   // 如果对应的桶已经满了，则进行扩充，有可能存在多个桶已经满的情况，所以使用循环扩充
-  while (this->dir_[IndexOf(key)]->IsFull()) {
+  while (dir_[IndexOf(key)]->IsFull()) {
     // std::cout<<"目录扩容+桶分裂"<<std::endl;
     auto index = IndexOf(key);               // 获取桶索引
-    auto target_bucket = this->dir_[index];  // 查找对应桶
+    auto target_bucket = dir_[index];  // 查找对应桶
 
     // 桶深度==全局深度-->目录扩充
-    if (target_bucket->GetDepth() == this->GetGlobalDepthInternal()) {
+    if (target_bucket->GetDepth() == GetGlobalDepthInternal()) {
       // 全局深度+1
-      this->global_depth_++;
-      int capacity = this->dir_.size();
+      global_depth_++;
+      int capacity = dir_.size();
       // 长度增加两倍,后面桶值等于前面的桶
-      this->dir_.resize(capacity << 1);
+      dir_.resize(capacity << 1);
 
       for (int i = 0; i < capacity; i++) {
-        this->dir_[i + capacity] = this->dir_[i];
+        dir_[i + capacity] = dir_[i];
       }
     }
 
@@ -149,10 +149,10 @@ void ExtendibleHashTable<K, V>::Insert(const K &key, const V &value) {
       }
     }
     // 桶数量+1 -- 正在使用的桶
-    this->num_buckets_++;
+    num_buckets_++;
     // 将桶放入两个不同索引中
-    for (size_t i = 0; i < this->dir_.size(); i++) {
-      if (this->dir_[i] == target_bucket) {
+    for (size_t i = 0; i < dir_.size(); i++) {
+      if (dir_[i] == target_bucket) {
         if ((i & mask) != 0U) {
           dir_[i] = bucket_1;
         } else {
@@ -163,7 +163,7 @@ void ExtendibleHashTable<K, V>::Insert(const K &key, const V &value) {
   }
   // 如果桶未满 --> 执行插入
   auto index = IndexOf(key);
-  auto target_bucket = this->dir_[index];
+  auto target_bucket = dir_[index];
 
   target_bucket->Insert(key, value);
 }
@@ -186,12 +186,12 @@ ExtendibleHashTable<K, V>::Bucket::Bucket(size_t array_size, int depth) : size_(
 template <typename K, typename V>
 auto ExtendibleHashTable<K, V>::Bucket::Find(const K &key, V &value) -> bool {
   // 如果bucket未空，则返回false
-  if (this->list_.empty()) {
+  if (list_.empty()) {
     return false;
   }
   // 不为空时开始查找
-  auto it = this->list_.begin();
-  while (it != this->list_.end()) {
+  auto it = list_.begin();
+  while (it != list_.end()) {
     // 找到了该值，返回true
     if (it->first == key) {
       value = it->second;
@@ -214,14 +214,14 @@ auto ExtendibleHashTable<K, V>::Bucket::Find(const K &key, V &value) -> bool {
 template <typename K, typename V>
 auto ExtendibleHashTable<K, V>::Bucket::Remove(const K &key) -> bool {
   // 如果桶为空，则返回false
-  if (this->list_.empty()) {
+  if (list_.empty()) {
     return false;
   }
   // 当桶未空时，查找，对其进行删除
-  for (auto it = this->list_.begin(); it != this->list_.end(); it++) {
+  for (auto it = list_.begin(); it != list_.end(); it++) {
     // 找到了这个key则对其进行删除，并返回true
     if (it->first == key) {
-      this->list_.erase(it);
+      list_.erase(it);
       return true;
     }
   }
@@ -243,7 +243,7 @@ auto ExtendibleHashTable<K, V>::Bucket::Remove(const K &key) -> bool {
 template <typename K, typename V>
 auto ExtendibleHashTable<K, V>::Bucket::Insert(const K &key, const V &value) -> bool {
   // 先查看当前桶中是否有key，如果有的替换当前value
-  for (auto &v : this->GetItems()) {
+  for (auto &v : GetItems()) {
     // 如果key已经存在于bucket则更新value,并返回true
     if (v.first == key) {
       v.second = value;
@@ -251,11 +251,11 @@ auto ExtendibleHashTable<K, V>::Bucket::Insert(const K &key, const V &value) -> 
     }
   }
   // 如果bucket已满则返回false，如果未满则进行插入操作，将值插入到尾部
-  if (this->IsFull()) {
+  if (IsFull()) {
     return false;
   }
   // 此时表明key不在bucket中，则插入key，value，在尾部插入
-  this->list_.emplace_back(key, value);
+  list_.emplace_back(key, value);
   return true;
 }
 

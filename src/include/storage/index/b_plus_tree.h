@@ -23,6 +23,8 @@ namespace bustub {
 
 #define BPLUSTREE_TYPE BPlusTree<KeyType, ValueType, KeyComparator>
 
+enum class Operation { SEARCH, INSERT, DELETE };
+
 /**
  * Main class providing the API for the Interactive B+ Tree.
  *
@@ -47,12 +49,17 @@ class BPlusTree {
 
   // Insert a key-value pair into this B+ tree.
   auto Insert(const KeyType &key, const ValueType &value, Transaction *transaction = nullptr) -> bool;
+  void CreateNewTree(const KeyType &key, const ValueType &value);
+  auto InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction = nullptr) -> bool;
+  void InsertIntoParent(BPlusTreePage *old_node, const KeyType &key, BPlusTreePage *new_node, Transaction *transaction);
 
   // Remove a key and its value from this B+ tree.
   void Remove(const KeyType &key, Transaction *transaction = nullptr);
 
   // return the value associated with a given key
   auto GetValue(const KeyType &key, std::vector<ValueType> *result, Transaction *transaction = nullptr) -> bool;
+  auto FindLeaf(const KeyType &key, Operation operation, Transaction *transaction = nullptr, bool leftMost = false,
+                bool rightMost = false) -> Page *;
 
   // return the page id of the root node
   auto GetRootPageId() -> page_id_t;
@@ -74,8 +81,25 @@ class BPlusTree {
   // read data from file and remove one by one
   void RemoveFromFile(const std::string &file_name, Transaction *transaction = nullptr);
 
+  template <typename N>
+  auto CoalesceOrRedistribute(N *node, Transaction *transacntion) -> bool;
+  // 调整根节点
+  template <typename N>
+  auto AdjustRoot(N *old_root_node) -> bool;
+
+  // 重分配
+  template <typename N>
+  void Redistribute(N *neighbor_node,N* node,BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *parent,int index,bool from_prev);
+
+  // 合并
+  template <typename N>
+  auto Coalesce(N *neighbor_node,N* node,BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *parent,int index,Transaction *transaction)->bool;
+
  private:
   void UpdateRootPageId(int insert_record = 0);
+  // 执行节点分裂
+  template <typename N>
+  auto Split(N *node) -> N *;
 
   /* Debug Routines for FREE!! */
   void ToGraph(BPlusTreePage *page, BufferPoolManager *bpm, std::ofstream &out) const;
@@ -83,12 +107,13 @@ class BPlusTree {
   void ToString(BPlusTreePage *page, BufferPoolManager *bpm) const;
 
   // member variable
-  std::string index_name_;
-  page_id_t root_page_id_;
-  BufferPoolManager *buffer_pool_manager_;
-  KeyComparator comparator_;
-  int leaf_max_size_;
-  int internal_max_size_;
+  std::string index_name_;                  // 索引名
+  page_id_t root_page_id_;                  // 根节点 page_id
+  BufferPoolManager *buffer_pool_manager_;  // 缓存池管理
+  KeyComparator comparator_;                // key值比较
+  int leaf_max_size_;                       // 叶子的最大尺寸
+  int internal_max_size_;                   // 内部节点的最大尺寸
+  ReaderWriterLatch root_page_id_latch_;    // 根节点读写锁
 };
 
 }  // namespace bustub
