@@ -119,7 +119,7 @@ void ExtendibleHashTable<K, V>::Insert(const K &key, const V &value) {
   // 如果对应的桶已经满了，则进行扩充，有可能存在多个桶已经满的情况，所以使用循环扩充
   while (dir_[IndexOf(key)]->IsFull()) {
     // std::cout<<"目录扩容+桶分裂"<<std::endl;
-    auto index = IndexOf(key);               // 获取桶索引
+    auto index = IndexOf(key);         // 获取桶索引
     auto target_bucket = dir_[index];  // 查找对应桶
 
     // 桶深度==全局深度-->目录扩充

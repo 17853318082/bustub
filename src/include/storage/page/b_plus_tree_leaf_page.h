@@ -49,43 +49,23 @@ class BPlusTreeLeafPage : public BPlusTreePage {
   auto GetNextPageId() const -> page_id_t;
   void SetNextPageId(page_id_t next_page_id);
   auto KeyAt(int index) const -> KeyType;
-  // 向叶子节点页面中插入数据（key，value）
-  auto Insert(const KeyType &key, const ValueType &value, const KeyComparator &key_comparator) -> int;
-  // 获取节点所在的位置
-  auto KeyIndex(const KeyType &key, const KeyComparator &key_comparator) -> int;
-
-  // 根据index获取键值对
-  auto GetItem(const int index) -> MappingType;
-  // 根据key，获取节点value
-  auto Lookup(const KeyType &key, ValueType *value, const KeyComparator &keyComparator) -> bool;
-
-  //  将该节点的一般数据 移动到另一个节点
-  void MoveHalfTo(BPlusTreeLeafPage *recipient);
-
-  // 从另一个节点中接收N个数据
-  void ReceiveN(MappingType *item, int size);
-
-  // 从叶节点中删除指定数据
+  auto GetItem(int index) -> const MappingType &;
+  auto KeyIndex(const KeyType &key, const KeyComparator &comparator) const -> int;
+  auto Insert(const KeyType &key, const ValueType &value, const KeyComparator &keyComparator) -> int;
+  auto Lookup(const KeyType &key, ValueType *value, const KeyComparator &keyComparator) const -> bool;
   auto RemoveAndDeleteRecord(const KeyType &key, const KeyComparator &keyComparator) -> int;
 
-  // 将节点从前到后复制到当前节点
-  void MoveFirstToLast(BPlusTreeLeafPage *node);
-
-  // 将指定数据插入到节点的最后一个
-  void InsertLast(const MappingType &item);
-
-  // 将节点从前到后复制到当前节点
-  void MoveLastToFirst(BPlusTreeLeafPage *node);
-
-  // 将指定数据插入到节点的第一个
-  void InsertFirst(const MappingType &item);
-
-  // 将指定所有数据移动到指定节点
-  void MoveAllTo(BPlusTreeLeafPage *node);
+  void MoveHalfTo(BPlusTreeLeafPage *recipient);
+  void MoveAllTo(BPlusTreeLeafPage *recipient);
+  void MoveFirstToEndOf(BPlusTreeLeafPage *recipient);
+  void MoveLastToFrontOf(BPlusTreeLeafPage *recipient);
 
  private:
   page_id_t next_page_id_;
   // Flexible array member for page data.
   MappingType array_[1];
+  void CopyNFrom(MappingType *items, int size);
+  void CopyLastFrom(const MappingType &item);
+  void CopyFirstFrom(const MappingType &item);
 };
 }  // namespace bustub

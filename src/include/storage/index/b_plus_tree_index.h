@@ -55,7 +55,8 @@ using IntegerKeyType = GenericKey<INTEGER_SIZE>;
 using IntegerValueType = RID;
 using IntegerComparatorType = GenericComparator<INTEGER_SIZE>;
 using BPlusTreeIndexForOneIntegerColumn = BPlusTreeIndex<IntegerKeyType, IntegerValueType, IntegerComparatorType>;
-using BPlusTreeIndexIteratorForOneIntegerColumn = IndexIterator<IntegerKeyType, IntegerValueType, IntegerComparatorType>;
+using BPlusTreeIndexIteratorForOneIntegerColumn =
+    IndexIterator<IntegerKeyType, IntegerValueType, IntegerComparatorType>;
 using IntegerHashFunctionType = HashFunction<IntegerKeyType>;
 
 }  // namespace bustub

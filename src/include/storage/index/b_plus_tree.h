@@ -49,7 +49,7 @@ class BPlusTree {
 
   // Insert a key-value pair into this B+ tree.
   auto Insert(const KeyType &key, const ValueType &value, Transaction *transaction = nullptr) -> bool;
-  void CreateNewTree(const KeyType &key, const ValueType &value);
+  void StartNewTree(const KeyType &key, const ValueType &value);
   auto InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction = nullptr) -> bool;
   void InsertIntoParent(BPlusTreePage *old_node, const KeyType &key, BPlusTreePage *new_node, Transaction *transaction);
 
@@ -82,18 +82,21 @@ class BPlusTree {
   void RemoveFromFile(const std::string &file_name, Transaction *transaction = nullptr);
 
   template <typename N>
-  auto CoalesceOrRedistribute(N *node, Transaction *transacntion) -> bool;
+  auto CoalesceOrRedistribute(N *node, Transaction *transaction) -> bool;
+
+  void ReleaseLatchFromQueue(Transaction *transaction);
   // 调整根节点
-  template <typename N>
-  auto AdjustRoot(N *old_root_node) -> bool;
+  auto AdjustRoot(BPlusTreePage *old_root_node) -> bool;
 
   // 重分配
   template <typename N>
-  void Redistribute(N *neighbor_node,N* node,BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *parent,int index,bool from_prev);
+  void Redistribute(N *neighbor_node, N *node, BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *parent,
+                    int index, bool from_prev);
 
   // 合并
   template <typename N>
-  auto Coalesce(N *neighbor_node,N* node,BPlusTreeInternalPage<KeyType,page_id_t,KeyComparator> *parent,int index,Transaction *transaction)->bool;
+  auto Coalesce(N *neighbor_node, N *node, BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *parent, int index,
+                Transaction *transaction) -> bool;
 
  private:
   void UpdateRootPageId(int insert_record = 0);
